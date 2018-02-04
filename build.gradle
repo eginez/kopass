@@ -20,6 +20,7 @@ apply plugin: 'com.github.johnrengelman.shadow'
 
 mainClassName = 'com.eginez.kopass.Main'
 
+
 repositories {
     mavenCentral()
 }
@@ -27,6 +28,7 @@ repositories {
 dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
     compile 'no.tornado:tornadofx:1.7.14'
+    compile fileTree(dir:'libs', include: ['*.jar'])
 
     testCompile 'junit:junit:4.12'
 }
@@ -41,3 +43,8 @@ compileTestKotlin {
 task wrapper(type: Wrapper) {
     gradleVersion = '3.5'
 }
+
+tasks.withType(org.gradle.api.tasks.JavaExec) {
+    systemProperty "java.library.path", "${projectDir}/libs/"
+}
+
