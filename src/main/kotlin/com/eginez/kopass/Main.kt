@@ -8,7 +8,12 @@ import javafx.stage.Stage
 import tornadofx.*
 import java.io.File
 import com.freiheit.gnupg.GnuPGContext
+import com.freiheit.gnupg.GnuPGException
+import javafx.animation.KeyFrame
+import javafx.animation.Timeline
+import javafx.event.EventHandler
 import javafx.scene.control.TextArea
+import javafx.util.Duration
 import java.nio.file.Paths
 
 
@@ -61,13 +66,42 @@ class MainScreen: View() {
     fun show(file: File) {
         if (file.isDirectory) return
         val cipher = file.readBytes()
-        val msg = ctx?.decrypt(cipher)
-        val d = find(PassDialog::class)
-        d.label.text = msg.toString()
-        d.openModal()
-        runLater(maxTimePassDialog) {
-            d?.close()
+        try {
+            val msg = ctx?.decrypt(cipher)
+            val d = find(PassDialog::class)
+            d.label.text = msg.toString()
+            d.openModal()
+            runLater(maxTimePassDialog) {
+                d?.close()
+            }
+        }catch (ex: GnuPGException) {
+            shakeStage()
         }
+    }
+
+    fun shakeStage() {
+        var moved = false
+        val cycleCount = 10
+        val move = 10
+        val keyframeDuration = Duration.seconds(0.04)
+
+        val stage = FX.primaryStage
+
+        val timeline = Timeline(KeyFrame(keyframeDuration, EventHandler {
+            if (!moved) {
+                stage.x = stage.x + move
+                stage.y = stage.y + move
+            } else {
+                stage.x = stage.x - move
+                stage.y = stage.y - move
+            }
+            moved = moved.not()
+        }))
+
+        timeline.cycleCount = cycleCount
+        timeline.isAutoReverse = false
+
+        timeline.play()
     }
 
     fun loadGPGLib() {
