@@ -29,6 +29,7 @@ dependencies {
     compile "org.jetbrains.kotlin:kotlin-stdlib-jre8:$kotlin_version"
     compile 'no.tornado:tornadofx:1.7.14'
     compile fileTree(dir:'libs', include: ['*.jar'])
+    runtime fileTree(dir:'libs', include: ['*.dylib'])
 
     testCompile 'junit:junit:4.12'
 }
@@ -47,4 +48,5 @@ task wrapper(type: Wrapper) {
 tasks.withType(org.gradle.api.tasks.JavaExec) {
     systemProperty "java.library.path", "${projectDir}/libs/"
 }
+
 
