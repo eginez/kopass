@@ -14,11 +14,14 @@ import javafx.animation.Timeline
 import javafx.event.EventHandler
 import javafx.scene.control.TextArea
 import javafx.util.Duration
+import java.io.PrintWriter
 import java.nio.file.Paths
 
 
 val  maxTimePassDialog = 10.seconds
 val passFile = ".password-store"
+val logFolder = "/tmp"
+val logFile = File.createTempFile("kopass", "log", File(logFolder))
 
 fun main(args: Array<String>) {
     Application.launch(TheApp::class.java, *args)
@@ -75,6 +78,9 @@ class MainScreen: View() {
                 d?.close()
             }
         }catch (ex: GnuPGException) {
+            val w = PrintWriter(logFile)
+            ex.printStackTrace(w)
+            w.close()
             shakeStage()
         }
     }
