@@ -11,12 +11,14 @@ buildscript {
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
         classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.0'
+        classpath group: 'de.dynamicfiles.projects.gradle.plugins', name: 'javafx-gradle-plugin', version: '8.8.2'
     }
 }
 
 apply plugin: 'kotlin'
 apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'javafx-gradle-plugin'
 
 mainClassName = 'com.eginez.kopass.Main'
 
@@ -49,4 +51,12 @@ tasks.withType(org.gradle.api.tasks.JavaExec) {
     systemProperty "java.library.path", "${projectDir}/libs/"
 }
 
+jfx {
+    mainClass = 'com.eginez.kopass.Main'
+    appName = 'koPass'
+    vendor = 'com.eginez'
+    bundleArguments = [ runtime: null]
+    runJavaParameter='-Djava.library.path=./lib'
 
+    jvmArgs=['-Djava.library.path=../Java/lib']
+}
