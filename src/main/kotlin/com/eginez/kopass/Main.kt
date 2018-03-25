@@ -70,17 +70,17 @@ class MainScreen: View() {
         if (file.isDirectory) return
         val cipher = file.readBytes()
         try {
-            val msg = ctx?.decrypt(cipher)
+            //val msg = ctx?.decrypt(cipher)
+            val name = file.path.removePrefix("${findHome()}/").removeSuffix(".gpg")
+            val msg = decryptgpg(file.path)
             val d = find(PassDialog::class)
             d.label.text = msg.toString()
             d.openModal()
             runLater(maxTimePassDialog) {
                 d?.close()
             }
-        }catch (ex: GnuPGException) {
-            val w = PrintWriter(logFile)
-            ex.printStackTrace(w)
-            w.close()
+        }catch (ex: Exception) {
+            ex.log()
             shakeStage()
         }
     }
@@ -123,3 +123,8 @@ class PassDialog : Fragment(){
     }
 }
 
+fun Exception.log() {
+    val w = PrintWriter(logFile)
+    this.printStackTrace(w)
+    w.close()
+}
