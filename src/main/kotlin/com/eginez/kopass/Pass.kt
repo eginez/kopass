@@ -21,25 +21,11 @@ fun decryptgpg(pathToFile: String): String? {
     } else  if (result?.exitCode != 0) {
         val error = result?.error?.bufferedReader()?.readText()
         val msg = "Fail to execute $command pass $pathToFile with error $error"
-        println(msg)
         val ex = RuntimeException(msg)
         throw ex
     }
     return null
 }
-fun decrypt(pathToFile: String): String? {
-    val result = "/usr/local/bin/pass $pathToFile".runCommand(File(System.getProperty("user.dir")))
-    if (result?.exitCode == 0) {
-        return result.output.bufferedReader().readText()
-    } else  if (result?.exitCode != 0) {
-        val error = result?.error?.bufferedReader()?.readText()
-        val msg = "Fail to execute comannd pass $pathToFile wiht error $error"
-        val ex = RuntimeException(msg)
-        ex.log()
-    }
-    return null
-}
-
 
 fun String.runCommand(workingDir: File): ProcessResult? {
     try {

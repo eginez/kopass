@@ -13,7 +13,9 @@ import javafx.animation.KeyFrame
 import javafx.animation.Timeline
 import javafx.event.EventHandler
 import javafx.scene.control.TextArea
+import javafx.scene.control.TreeView
 import javafx.util.Duration
+import java.io.FileInputStream
 import java.io.PrintWriter
 import java.nio.file.Paths
 
@@ -31,6 +33,7 @@ fun main(args: Array<String>) {
 fun findHome(): String = Paths.get(System.getProperty("user.home"), passFile).toString()
 
 class TheApp: App(MainScreen::class) {
+
     override fun start(stage: Stage) {
         super.start(stage)
     }
@@ -40,14 +43,23 @@ class MainScreen: View() {
     override val root = HBox()
     val noPassFiles = setOf(".gitattributes", ".gpg-id", "")
     var ctx: GnuPGContext? = null
+    var treeView = TreeView<File>()
 
 
     init {
-        loadGPGLib()
+        menubar {
+            useSystemMenuBarProperty().set(true)
+            menu("Actions") {
+                item("Refresh") {
+                    setOnAction { refresh(findHome()) }
+                }
+            }
+        }
+
         title = "Meerkats Pass"
         with(root) {
             vbox {
-                treeview<File> {
+                 treeView = treeview<File> {
                     root = TreeItem(File(findHome()))
                     cellFormat {
                         text = if (it == root.value) "Passwords"  else it.nameWithoutExtension
@@ -68,20 +80,21 @@ class MainScreen: View() {
 
     fun show(file: File) {
         if (file.isDirectory) return
-        val cipher = file.readBytes()
-        try {
-            //val msg = ctx?.decrypt(cipher)
-            val name = file.path.removePrefix("${findHome()}/").removeSuffix(".gpg")
-            val msg = decryptgpg(file.path)
-            val d = find(PassDialog::class)
-            d.label.text = msg.toString()
-            d.openModal()
-            runLater(maxTimePassDialog) {
-                d?.close()
+        runAsync {
+            try {
+                val msg = decryptgpg(file.path)
+                val d = find(PassDialog::class)
+                d.label.text = msg.toString()
+                runLater {
+                    d.openModal()
+                    runLater(maxTimePassDialog) {
+                        d?.close()
+                    }
+                }
+            } catch (ex: Exception) {
+                ex.log()
+                shakeStage()
             }
-        }catch (ex: Exception) {
-            ex.log()
-            shakeStage()
         }
     }
 
@@ -109,10 +122,6 @@ class MainScreen: View() {
 
         timeline.play()
     }
-
-    fun loadGPGLib() {
-        ctx = GnuPGContext()
-    }
 }
 
 class PassDialog : Fragment(){
@@ -125,6 +134,7 @@ class PassDialog : Fragment(){
 
 fun Exception.log() {
     val w = PrintWriter(logFile)
+    println(this)
     this.printStackTrace(w)
     w.close()
 }
