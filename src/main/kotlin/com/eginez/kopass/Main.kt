@@ -4,23 +4,20 @@ package com.eginez.kopass
 import javafx.application.Application
 import javafx.scene.control.TreeItem
 import javafx.scene.layout.HBox
-import javafx.stage.Stage
 import tornadofx.*
 import java.io.File
-import com.freiheit.gnupg.GnuPGContext
-import com.freiheit.gnupg.GnuPGException
 import javafx.animation.KeyFrame
 import javafx.animation.Timeline
 import javafx.event.EventHandler
 import javafx.scene.control.TextArea
 import javafx.scene.control.TreeView
+import javafx.scene.layout.Priority
 import javafx.util.Duration
-import java.io.FileInputStream
 import java.io.PrintWriter
 import java.nio.file.Paths
 
 
-val  maxTimePassDialog = 10.seconds
+val  maxTimePassDialog = 7.seconds
 val passFile = ".password-store"
 val logFolder = "/tmp"
 val logFile = File.createTempFile("kopass", "log", File(logFolder))
@@ -32,18 +29,13 @@ fun main(args: Array<String>) {
 
 fun findHome(): String = Paths.get(System.getProperty("user.home"), passFile).toString()
 
-class TheApp: App(MainScreen::class) {
-
-    override fun start(stage: Stage) {
-        super.start(stage)
-    }
-}
+class TheApp: App(MainScreen::class)
 
 class MainScreen: View() {
     override val root = HBox()
     val noPassFiles = setOf(".gitattributes", ".gpg-id", "")
-    var ctx: GnuPGContext? = null
     var treeView = TreeView<File>()
+    var secretsArea = TextArea()
 
 
     init {
@@ -51,7 +43,11 @@ class MainScreen: View() {
             useSystemMenuBarProperty().set(true)
             menu("Actions") {
                 item("Refresh") {
-                    setOnAction { refresh(findHome()) }
+                    setOnAction {
+                        if (refresh(findHome())) {
+                            information("Refresh", "Reloading secrets finished successfully")
+                        }
+                    }
                 }
             }
         }
@@ -60,6 +56,7 @@ class MainScreen: View() {
         with(root) {
             vbox {
                  treeView = treeview<File> {
+                     vgrow = Priority.ALWAYS
                     root = TreeItem(File(findHome()))
                     cellFormat {
                         text = if (it == root.value) "Passwords"  else it.nameWithoutExtension
@@ -74,6 +71,11 @@ class MainScreen: View() {
                         children?.asIterable()
                     }
                 }
+                vgrow = Priority.ALWAYS
+            }
+            vbox {
+                secretsArea = textarea { text = "" }
+                hgrow = Priority.ALWAYS
             }
         }
     }
@@ -83,12 +85,10 @@ class MainScreen: View() {
         runAsync {
             try {
                 val msg = decryptgpg(file.path)
-                val d = find(PassDialog::class)
-                d.label.text = msg.toString()
                 runLater {
-                    d.openModal()
+                    secretsArea.text = msg
                     runLater(maxTimePassDialog) {
-                        d?.close()
+                        secretsArea.clear()
                     }
                 }
             } catch (ex: Exception) {
@@ -121,14 +121,6 @@ class MainScreen: View() {
         timeline.isAutoReverse = false
 
         timeline.play()
-    }
-}
-
-class PassDialog : Fragment(){
-    override val root = HBox()
-    val label = TextArea()
-    init {
-        with(root) {this += label}
     }
 }
 
